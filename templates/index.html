@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analog Clock</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap">
+    <style>
+
+        /* Light Theme Styles */
+        body {
+            background: #87CEEB; /* Sky blue */
+            color: #000;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        .clock {
+            background: #fff; /* White background for the clock */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Added box shadow */
+        }
+
+        @keyframes tofro {
+            0% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(5deg); /* Increase to create a to-fro effect */
+            }
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+        
+        .clock-hand {
+            animation: tofro 1s ease-in-out infinite; /* Adjust timing and easing as needed */
+        }
+        
+        
+        /* Dark Theme Styles */
+        body.dark {
+            background: #000;
+            color: #fff;
+        }
+        
+        .clock.dark {
+            background: #333; /* Dark background for the clock */
+        }
+        
+        /* Existing styles */
+        *, *:after, *:before {
+            box-sizing: border-box;
+        }
+        
+        .clock {
+            --clock-size: 360px;
+            width: var(--clock-size);
+            height: var(--clock-size);
+            position: fixed;
+            inset: 0;
+            margin: auto;
+            border-radius: 50%;
+        }
+        
+        /* Black color for clock lines in light theme */
+        .spike {
+            position: absolute;
+            width: 8px;
+            height: 1px;
+            background: #000; /* Black for light theme */
+            line-height: 20px;
+            transform-origin: 50%;
+            z-index: 5;
+            inset: 0;
+            margin: auto;
+            font-style: normal;
+            transform: rotate(var(--rotate)) translateX(var(--dail-size));
+        }
+        
+        .spike:nth-child(5n+1) {
+            box-shadow: -7px 0 #000; /* Adjust shadow color to match */
+        }
+        
+        .spike:nth-child(5n+1):after {
+            content: attr(data-i);
+            position: absolute;
+            right: 22px;
+            top: -10px;
+            transition: 1s linear;
+            transform: rotate(calc(var(--dRotate) - var(--rotate)));
+        }
+        
+        .seconds {
+            --dRotate: 0deg;
+            --dail-size: calc((var(--clock-size) / 2) - 8px);
+            font-weight: 800;
+            font-size: 18px;
+            transform: rotate(calc(-1 * var(--dRotate)));
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            transition: 1s linear;
+        }
+        
+        .minutes {
+            --dail-size: calc((var(--clock-size) / 2) - 65px);
+            font-size: 16px;
+            transform: rotate(calc(-1 * var(--dRotate)));
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            transition: 1s linear;
+        }
+        
+        .stop-anim {
+            transition: 0s linear;
+        }
+        
+        .stop-anim .spike:after {
+            transition: 0s linear !important;
+        }
+        
+        .hour {
+            font-size: 70px;
+            font-weight: 900;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .minute {
+            font-size: 36px;
+            font-weight: 900;
+            position: absolute;
+            z-index: 15; /* Keep the z-index to ensure it appears above other elements */
+            right: calc(var(--clock-size) / 4.5);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Background for minute text in dark mode only */
+        body.dark .minute {
+            background: #000; /* Background color for dark mode */
+        }
+        
+        .minute:after {
+            content: "";
+            position: absolute;
+            border: 2px solid #fff;
+            border-right: none;
+            height: 50px;
+            left: -10px;
+            top: 50%;
+            border-radius: 40px 0 0 40px;
+            width: calc(var(--clock-size) / 2.75);
+            transform: translateY(-50%);
+        }
+        
+        /* Theme Button Styling */
+        .theme-toggle {
+            position: fixed;
+    right: 20px;
+            padding: 10px 20px;
+            background-color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        
+        /* Button Hover Effect */
+        .theme-toggle, button[type="submit"] {
+            position: relative;
+            overflow: hidden;
+            padding: 20px 30px;
+            height:40px;
+            background-color: #2196F3; /* Blue for light theme */
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            font-size: 16px;
+            transition: background-color 0.3s, color 0.3s;
+            z-index: 1;
+            border-radius:12px;
+        }
+        
+        .theme-toggle::before, button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: #FF9800; /* Orange on hover */
+            transition: all 0.3s ease-in-out;
+            z-index: -1;
+            border-radius:12px
+        }
+        
+        .theme-toggle:hover::before, button[type="submit"]:hover::before {
+            left: 0;
+        }
+        
+        .theme-toggle:hover, button[type="submit"]:hover {
+            color: #fff;
+        }
+        
+        /* Dark mode button colors */
+        .theme-toggle.dark, button[type="submit"].dark {
+            background-color: #444;
+            color: #fff;
+        }
+        
+        .theme-toggle.dark:hover::before, button[type="submit"].dark:hover::before {
+            background-color: #FF9800;
+        }
+        
+        .clock:hover {
+            transform: scale(1.05); /* Slight zoom on hover */
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.4); /* Enhanced shadow */
+        }
+        
+        /* Increase the height of the timezone selection container */
+        .timezone-select {
+            height: 40px; /* Adjust this height as needed */
+            /* Additional styles for the timezone selection */
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;  /* Adjust as needed */
+            right: 20px; /* Set to the right-most side */
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        /* Existing styles... */
+
+form {
+    
+    display: flex;
+    margin-top: 20px; /* Add space above the form */
+}
+
+select, button[type="submit"] {
+    height: 40px; /* Set a fixed height for consistency */
+    font-size: 16px;
+    padding: 0 15px; /* Padding for the select box */
+    margin: 0 5px; /* Space between select and button */
+}
+
+.theme-toggle {
+    position: absolute;
+    top: 20px;  /* Adjust as needed */
+    right: 20px; /* Set to the right-most side */
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    height: 40px; /* Set a fixed height for consistency */
+}
+
+/* Additional styles for buttons */
+button {
+    display: flex;
+    align-items: center; /* Center the text vertically */
+    justify-content: center; /* Center the text horizontally */
+    padding:20px
+}
+.date-container {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    margin-top: 20px; /* Space above the date section */
+}
+
+.date-card {
+    background: #fff; /* White background for the card */
+    padding: 20px;
+    border-radius: 15px; /* Rounded corners */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Box shadow */
+    transition: transform 0.3s, box-shadow 0.3s; /* Transition for hover effects */
+    text-align: center; /* Center text */
+    margin-top: 70vh;
+}
+
+.date-card:hover {
+    transform: translateY(-5px); /* Slight lift on hover */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+}
+
+.date {
+    font-size: 24px; /* Increased font size for the date */
+    font-weight: bold; /* Bold font for emphasis */
+    margin: 0; /* Remove default margin */
+}
+
+.timezone {
+    font-size: 16px; /* Slightly smaller font for the timezone */
+    color: #555; /* Gray color for the timezone text */
+}
+
+/* Light Theme Styles */
+.time-container {
+    background-color: #f0f0f0; /* Light background */
+    color: #333; /* Dark text color */
+}
+
+/* Dark Theme Styles */
+.dark .time-container {
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text color */
+}
+
+.dark .time-card {
+    background: #1e1e1e; /* Darker card background */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Darker shadow */
+}
+
+/* Add transition for smooth switching */
+.time-container, .time-card {
+    margin-top:75vh;
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s; /* Smooth transitions */
+}
+
+/* Additional styles for the time section */
+.time-card {
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Default shadow */
+    text-align: center; /* Center text */
+}
+
+.time {
+    font-size: 36px; /* Font size for time */
+    font-weight: bold; /* Bold font for emphasis */
+    margin: 0; /* Remove default margin */
+}
+
+
+/* Dark theme styles */
+body.dark-mode {
+    background-color: #121212; /* Dark background */
+    color: white; /* White text */
+}
+
+body.dark-mode .switch-button,
+body.dark-mode .timezone-button {
+    background-color: #333; /* Darker background for buttons in dark theme */
+    color: white; /* White text for buttons in dark theme */
+    border: 1px solid #555; /* Darker border */
+}
+
+/* Dark theme button and form styles */
+body.dark-mode button,
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+    background-color: #1a1a1a; /* Blackish background for buttons and form elements */
+    color: white; /* White text color */
+    border: 1px solid #444; /* Darker border for input fields */
+}
+
+/* Add hover effects for buttons */
+.switch-button:hover,
+.timezone-button:hover {
+    opacity: 0.8; /* Slight opacity change on hover */
+}
+
+body.dark-mode .switch-button:hover,
+body.dark-mode .timezone-button:hover {
+    opacity: 0.9; /* Slight opacity change on hover in dark mode */
+}
+
+/* Optional: Style for input fields in dark mode */
+body.dark-mode input,
+body.dark-mode textarea {
+    background-color: #1a1a1a; /* Background for input fields */
+    color: white; /* Text color for input fields */
+    border: 1px solid #444; /* Border for input fields */
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+    color: #ccc; /* Placeholder text color for better visibility */
+}
+
+/* Specific styling for forms in dark mode */
+body.dark-mode form {
+    background-color: #222; /* Slightly lighter dark shade for the form background */
+    padding: 20px; /* Padding for the form */
+    border-radius: 5px; /* Rounded corners for form */
+}
+
+/* Ensure the timezone button also has a dark background in dark mode */
+body.dark-mode .timezone-button {
+    background-color: #444; /* Dark background specifically for timezone button */
+    color: white; /* White text for timezone button */
+}
+
+/* Button Hover Effect, Theme Toggle, etc. ... */
+
+        
+        
+        
+        
+        
+        
+    </style>
+</head>
+
+<body>
+
+    <button class="theme-toggle">Light/Dark Mode</button>
+
+    <form method="POST" action="/">
+        <select name="timezone" class="timezone-select">
+            {% for timezone in timezones %}
+                <option value="{{ timezone }}" {% if timezone == 'Asia/Kolkata' %}selected{% endif %}>{{ timezone }}</option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Change Timezone</button>
+    </form>
+
+    <div class="clock">
+        <div class="seconds"></div>
+        <div class="minutes"></div>
+        <div class="minute">{{ current_time.split(':')[1] }}</div>
+        <div class="hour">{{ current_time.split(':')[0] }}</div>
+    </div>
+    
+    <div class="time-container ">
+        <div class="time-card">
+            <h2 class="time">{{ current_time }}</h2>  <!-- Display current time -->
+            <p class="timezone">Timezone: {{ selected_timezone }}</p>  <!-- Display timezone -->
+        </div>
+    </div>
+
+   
+    
+
+
+
+    <script>
+        const seconds = document.querySelector('.seconds');
+        const minutes = document.querySelector('.minutes');
+        const minute = document.querySelector('.minute');
+        const hour = document.querySelector('.hour');
+        const themeToggle = document.querySelector('.theme-toggle');
+        const timezoneSelect = document.querySelector('.timezone-select');
+        
+        let currentTimezone = '{{ selected_timezone }}'; // Get the currently selected timezone
+        let interval;
+
+        // Create spikes
+        for (let s = 0; s < 60; s++) {
+            let mSpikeEl = document.createElement('i');
+            let sSpikeEl = document.createElement('i');
+            mSpikeEl.className = 'spike';
+            sSpikeEl.className = 'spike';
+            mSpikeEl.style = `--rotate:${6 * s}deg`;
+            sSpikeEl.style = `--rotate:${6 * s}deg`;
+            mSpikeEl.setAttribute('data-i', s);
+            sSpikeEl.setAttribute('data-i', s);
+
+            seconds.append(sSpikeEl);
+            minutes.append(mSpikeEl);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const options = { timeZone: currentTimezone, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const formatter = new Intl.DateTimeFormat([], options);
+            const parts = formatter.formatToParts(now);
+
+            // Extract hour, minute, and second from the formatted parts
+            const hourValue = parts.find(part => part.type === 'hour').value;
+            const minuteValue = parts.find(part => part.type === 'minute').value;
+            const secondValue = parts.find(part => part.type === 'second').value;
+
+            hour.textContent = hourValue;
+            minute.textContent = minuteValue;
+
+            minutes.style = `--dRotate:${6 * minuteValue}deg`;
+            seconds.style = `--dRotate:${6 * secondValue}deg`;
+        }
+
+        function startClock() {
+            updateClock(); // Initial update
+            interval = setInterval(updateClock, 1000); // Update every second
+        }
+
+        startClock(); // Start the clock
+
+        // Update timezone when the form is submitted
+        document.querySelector('form').addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent default form submission
+            currentTimezone = timezoneSelect.value; // Update the current timezone
+            startClock(); // Restart the clock
+            // Submit the form to update the time on the server
+            event.target.submit();
+        });
+
+        // Theme Toggle Functionality
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            document.querySelector('.clock').classList.toggle('dark');
+            themeToggle.classList.toggle('dark');
+            themeToggle.textContent = document.body.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+        });
+
+
+        const themeToggleButton = document.getElementById('theme-toggle-button');
+
+themeToggleButton.addEventListener('click', () => {
+    document.body.classList.toggle('dark'); // Toggle dark class on body
+});
+
+
+function animateClockHands() {
+    const hourHand = document.querySelector('.hour-hand');
+    const minuteHand = document.querySelector('.minute-hand');
+    const secondHand = document.querySelector('.second-hand');
+
+    setInterval(() => {
+        let currentTime = new Date();
+        let hours = currentTime.getHours() % 12; // Convert to 12-hour format
+        let minutes = currentTime.getMinutes();
+        let seconds = currentTime.getSeconds();
+
+        let hourRotation = (hours + minutes / 60) * 30; // 360/12 = 30 degrees per hour
+        let minuteRotation = (minutes + seconds / 60) * 6; // 360/60 = 6 degrees per minute
+        let secondRotation = seconds * 6; // 360/60 = 6 degrees per second
+
+        hourHand.style.transform = `rotate(${hourRotation}deg)`;
+        minuteHand.style.transform = `rotate(${minuteRotation}deg)`;
+        secondHand.style.transform = `rotate(${secondRotation}deg)`;
+        
+        // To-fro effect
+        hourHand.style.animation = "tofro 1s ease-in-out infinite";
+        minuteHand.style.animation = "tofro 1s ease-in-out infinite";
+        secondHand.style.animation = "tofro 1s ease-in-out infinite";
+    }, 1000); // Update every second
+}
+
+document.addEventListener("DOMContentLoaded", animateClockHands);
+
+
+function formatDateTime(timezone) {
+    const now = new Date();
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: timezone,
+        timeZoneName: 'short'
+    };
+    return now.toLocaleString('en-US', options);
+}
+
+// Update date and timezone display
+function updateDateAndTimezone() {
+    const selectedTimezone = document.getElementById('timezone-select').value;
+    const dateElement = document.getElementById('current-date');
+    const timezoneElement = document.getElementById('current-timezone');
+
+    const formattedDate = formatDateTime(selectedTimezone);
+    dateElement.textContent = formattedDate;
+    timezoneElement.textContent = `Timezone: ${selectedTimezone}`;
+}
+
+// Event listener for timezone change
+document.getElementById('timezone-select').addEventListener('change', (event) => {
+    updateDateAndTimezone();
+});
+
+// Initial call to display the default timezone and date
+updateDateAndTimezone();
+
+
+    </script>
+</body>
+</html>
